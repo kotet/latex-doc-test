@@ -1,0 +1,31 @@
+version: 2
+
+jobs:
+  build:
+    working_directory: ~/latex-doc-test
+    docker:
+      - image: paperist/alpine-texlive-ja
+        environment:
+          TZ: "/usr/share/zoneinfo/Asia/Tokyo"
+          LANG: ja_JP.UTF-8
+          DEPLOY_BRANCH: master
+
+    steps:
+      - run:
+          command: |
+            apk update && \
+            apk upgrade && \
+            apk add --no-cache \
+            git \
+            openssh
+      - checkout
+      - run:
+          command: |
+            uplatex doc.tex
+            dvipdfmx doc.dvi
+      - run:
+          command: |
+            if [ "${CIRCLE_BRANCH}" = "${DEPLOY_BRANCH}" ]; then
+              chmod +x deploy.sh
+              sh deploy.sh
+            fi
